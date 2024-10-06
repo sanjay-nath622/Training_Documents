@@ -365,3 +365,383 @@ Day 38: 25th Sep. 2024
 				Scale-up the pod instances !
 				Scale-down the pod instances !
 	
+#######################
+Day 39: 26th Sep. 2024
+#######################	
+
+	Deployment Controller Object :::
+	
+		--> It is used to deploy the pods and ensure high availability of pods by creating pod replicas 
+		--> 1. Create Muliple instance/replicas/copies of pods 
+			2. Used to Scale-Up / Scale-Down the Pods 
+			3. Used to Upgrade the application pods 
+			4. Used to Down-grade/roll-back the application pods
+		--> The upgrade/down-grade of application pods can be done without any downtime. 
+		--> To achieve zero-downtime during upgrade/down-grade, By Default, it used Rolling-Update Deployment Strategy.	
+
+	
+
+		- Upgrade the application pods 
+		- Down-grade/roll-back the application pods
+		
+		
+	What is the need for Kubectl describe Command ???
+	
+	- Kubectl Describe Command is used to capture the complete information about the kubenetes objects
+	- Kubectl Describe Command provides the complete list of events based on the kubernetes object. 
+	- Kubectl Describe Command is used to diagonize/debug/analyze the kubernetes objects 
+
+
+
+	Developer created --> webappimg:v1.0 ==> Publish to container Registry	==> Deployed to kubernetes
+	Developer created --> webappimg:v2.0 ==> Publish to container Registry	==> Deployed to kubernetes
+	
+	
+	Deployment Strategy :::
+	
+		nginx-deploy ---> nginx:stable-otel(v1.0)	# Current version of Application Image 
+		
+			pod1	---> nginx:stable-otel(v1.0)		# Current version of Application Image
+			pod2	---> nginx:stable-otel(v1.0)		# Current version of Application Image
+			pod3 	---> nginx:stable-otel(v1.0)		# Current version of Application Image
+	
+	
+	
+
+		Upgrade the Application Image from nginx:stable-otel(v1.0) to nginx:stable-pearl(v2.0)
+
+		nginx-deploy ---> nginx:stable-pearl(v2.0)	# Current version of Application Image 
+
+			pod1	---> nginx:stable-pearl(v2.0)		# Current version of Application Image
+			pod2	---> nginx:stable-pearl(v2.0)		# Current version of Application Image
+			pod3 	---> nginx:stable-pearl(v2.0)		# Current version of Application Image
+
+
+		--> To achieve zero-downtime during upgrade/down-grade, By Default, it used Rolling-Update Deployment Strategy.	
+
+		During the Upgrade, if anything goes wrong, we can quickly roll-back to previous version
+		
+		
+		First will see how to deploy any new version of image, for roll-back 
+
+
+		roll-back - When will go for roll-back ???
+		
+			Whenever the deployment fails, will go for roll-back/undo the changes 
+		
+			when pod is not running as expected
+			when we need to use previous version 
+			
+			
+			
+	Kubernetes Services :::
+	
+		Services are used to enable the communication to the pods :::
+		
+		
+		- Cluster-IP Service:
+			- It is used to enable the communication between the pods within the cluster 
+		
+		- Node-Port Service 
+			- It is used to expose the pods to internet
+			- Uses the port range : 30000 to 32767 
+		
+		- Load Balancer Service
+
+			- Is used to reduce the number of IPs address to be maintained for NodePort Service.
+			
+			- Load Balancer Service Created on top of the NodePort Service, will receives the request from end user thru internet and Route the request the corresponding nodeport service and access the pod within that.		
+		
+		
+		3-tier application :
+		
+			- Front-End
+			
+			- Application-Layer 
+			
+			- Data-Base Layer
+			
+			
+Next :::
+
+	Volume - Kubernetes Hostpath Volume
+
+	Kubernetes Namespaces
+
+	Demo : Using this Deployment controller Object and Service : using jenkins.
+	
+	
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loksai-eta-deploy
+  labels:
+    app: loksai-eta-deploy-lbl
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: loksai-eta-app
+  template:
+    metadata:
+      labels:
+        app: loksai-eta-app
+    spec:
+      containers:
+      - name: loksai-eta-container
+        image: loksaieta/loksai-eta-app
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loksai-eta-np-service
+  labels:
+    app: loksai-eta-app
+spec:
+  selector:
+    app: loksai-eta-deploy-lbl
+
+  type: NodePort
+  ports:
+  - nodePort: 31028
+    port: 8080
+    targetPort: 8080
+
+
+
+#######################
+Day 40: 27th Sep. 2024
+#######################
+
+	Kubenetes Namespaces :::
+		
+	Kubernetes Volumes :::
+	
+	Kubernetes Integration with Jenkins - Demo
+
+
+	- Kubernetes Volumes :::
+	
+		Persistant Volumes ::
+		
+			--> Is used to maintain the persistant data.
+			
+		Hostpath Volume :::
+		
+			- Same as Docker Volume.
+			
+			- Difference is hostpath volume is created at the pod level not at the container level.
+			
+			- Used to pass the input files to pods and restore the output from pods.
+			
+			
+	
+	- Kubernetes Namespace :::
+	
+		- Is the Logical Partition of Kubernetes Cluster
+		
+		
+		Environments:
+		
+			Dev 
+			
+			QA 
+			
+			UAT 
+			
+			Prod 
+			
+		kubectl create namespace dev 			# Create Namespace
+	
+vi nginx-devpod.yaml
+	
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  namespace: appteam2
+  labels:
+    app: nginx
+    tier: dev
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx
+
+    ports:
+    - containerPort: 80
+			
+			kubectl create -f nginx-devpod.yaml
+			
+			kubectl get pods --namespace=dev
+			
+			kubectl get pods --all-namespaces
+			
+			kubectl delete pod nginx-pod --namespace=dev			# Used to delete the pod created in this namespace
+			
+	Note: During real-Project Discussion, will show how to use kubernetes namespaces 
+	
+	
+	
+	Kubernetes Integration with Jenkins - Demo ::::
+	
+	Project: 
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loksai-eta-deploy
+  labels:
+    app: loksai-eta-deploy-lbl
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: loksai-eta-app
+  template:
+    metadata:
+      labels:
+        app: loksai-eta-app
+    spec:
+      containers:
+      - name: loksai-eta-container
+        image: loksaieta/sa-wd-webapp
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loksai-eta-np-service
+  labels:
+    app: loksai-eta-app
+spec:
+  selector:
+    app: loksai-eta-deploy-lbl
+
+  type: NodePort
+  ports:
+  - nodePort: 31028
+    port: 8080
+    targetPort: 8080
+
+
+	How to implement this using Jenkins CICD Pipeline :
+	
+	
+	
+	Objective :::
+	
+		Jenkins pipeline, perform application build, create container images,  Publish application image to Container registry and deploy to kubernetes cluster 
+		
+		
+	Resources - Servers/Tools Needed :
+	
+	
+		Servers :::
+		
+			Jenkins_Master													--> # To create CICD Pipeline Jobs and schedule it to run in Slave Nodes
+			
+				Build_Server-Jenkins_Slave 									--> # Compile the Source Code 
+				(Perform Application Build and Docker Build)					# Perform Unit Testing 
+																				# Create Artifacts 
+																				# Create Application Image 
+																				# Publish Application Image to DockerHub Registry
+			
+			Kubernetes_Master												--> Schedule Pod Deployments 
+				Kubernetes_WorkNode1										--> Execute the Pods 
+				Kubernetes_WorkNode2										--> Execute the Pods
+
+			
+		Tools ::::
+	
+			Jenkins_Master						--->	# jdk, jenkins, git 
+            	Build_Server-Jenkins_Slave 		--->	# git, jdk, maven, docker
+			Kubernetes_Master					---> 	# All Kubernetes Components
+            	Kubernetes_WorkNode1
+            	Kubernetes_WorkNode2
+
+		Maintain DockerHub Credentials in the Jenkins Credential Manager 
+			goto jenkins dashboard 
+				-- Manage Jenkins 
+					-- Credential 
+						-- using dockerhub username and access token 	
+						
+		
+		
+		Integration of Kubernetes Master Node with Jenkins Master Node.
+		
+			- Using Publish over ssh plugins, integrate Kubernetes_Master Node to Jenkins Master Node
+			- And Execute kubectl create command using Publish over ssh plugins
+			
+			--> 1. Create a devopsadmin - User in Kubernetes_Master
+			--> 2. Create SSH Keys to devopsadmin - User
+			--> 3. Ensure that devopsadmin - User have access to execute kubectl commands
+			--> 4. Use, the Kubernetes - Master Node's - Private IP Address,User_Name and Credential to config in Jenkins - Publish Over SSH
+			--> 5. Create a Pipeline Deployment Stage using Publish Over SSH Plugins step
+					- To copy the kubernetes manifest file - *.yaml file from jenkins_Slave Node to Kubernetes Master Node.
+					- To execute a command : kubectl create -f kdeploy.yaml
+					
+	
+							kubectl create -f kdeploy.yaml			# Used to create a new kubernetes object 
+							
+							kubectl apply -f kdeploy.yaml			# Used to create/replace a kubernetes object 
+	
+	
+sshPublisher(publishers: [sshPublisherDesc(configName: 'SA_WD_Kubernetes_Master', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'kubectl apply -f kubedeploy.yaml', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '.', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '*.yaml')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+	
+	
+pipeline {
+     agent { label 'slave1' }
+
+	environment {	
+		DOCKERHUB_CREDENTIALS=credentials('dockerloginid')
+	}
+		
+    stages {
+        stage('SCM_Checkout') {
+            steps {
+                echo 'Perform SCM Checkout'
+                git 'https://github.com/SA-AWS-DevOps-July24/java-mvn-springbootapp.git'
+            }
+        }
+        stage('Application Build') {
+            steps {
+                echo 'Perform Application Build'
+                sh 'mvn clean package'
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                echo 'Perform Docker Build'
+				sh "docker build -t loksaieta/sa-wd-webapp:${BUILD_NUMBER} ."
+				sh "docker tag loksaieta/sa-wd-webapp:${BUILD_NUMBER} loksaieta/sa-wd-webapp:latest"
+				sh 'docker image list'
+            }
+        }
+        stage('Login to Dockerhub') {
+            steps {
+                echo 'Login to DockerHub'				
+				sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                
+            }
+        }
+        stage('Publish the Image to Dockerhub') {
+            steps {
+                echo 'Publish to DockerHub'
+				sh "docker push loksaieta/sa-wd-webapp:latest"                
+            }
+        }
+        stage('Deploy to Kubernetes Cluster') {
+            steps {
+				script {
+				sshPublisher(publishers: [sshPublisherDesc(configName: 'SA_WD_Kubernetes_Master', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: 'kubectl apply -f kubedeploy.yaml', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '.', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '*.yaml')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+			}				          
+            }
+        }
+    }
+}	
+
